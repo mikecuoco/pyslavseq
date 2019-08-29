@@ -1,3 +1,0 @@
-[console_scripts]
-pyslavseq_extract_features = pyslavseq.features.get_window_features_occupied:main
-
