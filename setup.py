@@ -11,9 +11,6 @@ setup(name='pyslavseq',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       include_package_data=True,
-      package_data={
-          'pyslavseq.data.genome': ['src/pyslavseq/data/genome/hg19.genome']
-      },
       entry_points={
           'console_scripts': [
               'pyslavseq_extract_features = pyslavseq.features.get_window_features_occupied:main'
