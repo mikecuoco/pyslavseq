@@ -1,2 +1,2 @@
 #!/usr/bin/env python
-__author__ = "Rohini Gadde, Michael Cuoco"
+__author__ = "Rohini Gadde"
