@@ -23,7 +23,7 @@ pytest = "^7.1.2"
 
 [tool.poetry.scripts]
 pyslavseq_extract_features = "pyslavseq.features.get_window_features_occupied:main"
-add_tags = "pyslavseq.add_tags.add_tags:main"
+add_tags = "pyslavseq.tags.add_tags:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
