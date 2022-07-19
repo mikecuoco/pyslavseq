@@ -56,7 +56,7 @@ def prio_pair_rmdup(filename, out_filename):
                 all_fields = "\t".join([r1.qname, str(r1.mapping_quality + r2.mapping_quality), str(sumqual), pos])
                 
                 subprocess.run(
-                    "sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c |" +
+                    "sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | " +
                     "perl -pe 's/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/' | cut -f 1,2 | sort -S 5000M", 
                     input=all_fields, stdout=outfile, shell=True, check=True, text=True)
 
@@ -102,10 +102,10 @@ def main():
 
     prio_pair_rmdup(
         input_bam_fn, 
-        "results/selected.txt")
+        "selected.txt")
 
     input_bam = open(input_bam_fn, "r")
-    header = open("results/header.txt", "w+")
+    header = open("header.txt", "w+")
     output_bam = open(output_bam_fn, "w+")
 
     subprocess.run(["samtools", "view", "-H"], stdin=input_bam, stdout=header, check=True, text=True)
@@ -113,16 +113,16 @@ def main():
     input_bam.seek(0) # reset file pointer to start of file
     p1 = subprocess.Popen(["samtools", "view"], stdin=input_bam, stdout=subprocess.PIPE, text=True)
     p2 = subprocess.run(
-        "sort -T ./ -S 1500M -s -k 1,1 |" +
-        "join -t '\t' - results/selected.txt | cat results/header.txt - | samtools view -S -b -",
+        "sort -T ./ -S 1500M -s -k 1,1 | " +
+        "join -t '\t' - selected.txt | cat header.txt - | samtools view -S -b -",
         stdin=p1.stdout, stdout=output_bam, shell=True, check=True, text=True)
 
     input_bam.close()
     header.close()
     output_bam.close()
 
-    os.remove("results/selected.txt")
-    os.remove("results/header.txt")
+    os.remove("selected.txt")
+    os.remove("header.txt")
 
 if __name__ == "__main__":
     main()
