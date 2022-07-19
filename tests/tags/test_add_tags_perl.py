@@ -38,7 +38,7 @@ def test_calculate_ys(read):
     ys = calculate_ys(read)
     assert int(ys) == read.get_tag('YS')
 
-def test_calculate_tags(test):
+def test_add_tags(test):
 
     CONSENSUS, PREFIX_LENGTH, R1_FLANK_LENGTH, R2_FLANK_LENGTH, SOFT_CLIP_LENGTH_THRESHOLD = test.parameters
 
