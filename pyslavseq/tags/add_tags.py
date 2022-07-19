@@ -27,7 +27,9 @@ def calculate_yr(read, soft_clip_threshold):
         is_clipped = True if cigar[0] == 4 and cigar[1] >= soft_clip_threshold else is_clipped
 
     if not read.is_reverse and is_clipped : return 0
-    if read.is_reverse and is_clipped: return 0
+
+    is_end_clipped = True if read.cigartuples[-1][0] == 4 and read.cigartuples[-1][1] >= soft_clip_threshold else False
+    if read.is_reverse and is_end_clipped: return 0
     
     return 1
 
@@ -40,7 +42,7 @@ def calculate_ys(read):
     if not read.is_reverse and clip_len: 
         return clip_len
 
-    end_clip_len = read.cigartuples[-1][0] if read.cigartuples[-1][0] == 4 else 0
+    end_clip_len = read.cigartuples[-1][1] if read.cigartuples[-1][0] == 4 else 0
     if read.is_reverse and end_clip_len: 
         return end_clip_len
 
