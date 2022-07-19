@@ -3,7 +3,7 @@
 Variant calling for Somatic L1-Associated Variant (SLAV) sequencing.
 
 ```bash
-pip install git+git://github.com/apuapaquola/pyslavseq.git
+pip install git+git://github.com/mikecuoco/pyslavseq.git
 ```
 
 ### Publication
