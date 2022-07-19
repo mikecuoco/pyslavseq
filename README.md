@@ -1,10 +1,10 @@
 # pyslavseq
 
-Analysis package for the SLAV-Seq LINE1 targeted sequencing protocol.
+Variant calling for Somatic L1-Associated Variant (SLAV) sequencing.
 
-<code>
+```bash
 pip install git+git://github.com/apuapaquola/pyslavseq.git
-</code>
+```
 
 ### Publication
 
