@@ -3,7 +3,12 @@ name = "pyslavseq"
 version = "0.1.0"
 description = "Variant calling for Somatic L1-Associated Variant (SLAV) sequencing"
 authors = ["Apuã Paquola <apuapaquola@gmail.com>"]
-license = "GPLv3"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+repository = "https://github.com/mikecuoco/pyslavseq"
+packages = [
+    { include = "pyslavseq"}
+    ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -12,7 +17,7 @@ pysam = "^0.19.1"
 MOODS-python = "^1.9.4"
 
 [tool.poetry.dev-dependencies]
-# TODO add pytest
+pytest = "^7.1.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
