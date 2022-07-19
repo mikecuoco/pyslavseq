@@ -7,14 +7,26 @@ import pysam
 import pytest
 
 # setup class for testing
-from pyslavseq.tags.add_tags import setup_aligner, set_parameters
-aligner = setup_aligner()
-CONSENSUS, PREFIX_LENGTH, R1_FLANK_LENGTH, R2_FLANK_LENGTH, SOFT_CLIP_LENGTH_THRESHOLD = set_parameters()
+class TestAddTagsPerl:
+    
+    from pyslavseq.tags.add_tags import setup_aligner, set_parameters
+    
+    aligner = setup_aligner()
+    parameters = set_parameters()
+        
+    def bam(self, bam_file):
+        self.bam = pysam.AlignmentFile(str(bam_file), 'rb')
 
-ref_file = Path(__file__).parent / "hs37d5_hg19_chr22.fa"
-bam_file = Path(__file__).parent / 'test.bam'
-bam = pysam.AlignmentFile(str(bam_file), 'rb')
-ref = pyfaidx.Fasta(str(ref_file))
+    def ref(self,ref_file):
+        self.ref = pyfaidx.Fasta(str(ref_file))
+
+# define fixture 
+@pytest.fixture
+def test():
+    test = TestAddTagsPerl()
+    test.bam(bam_file = Path(__file__).parent / 'test.sam')
+    test.ref(ref_file = Path(__file__).parent / "hs37d5_hg19_chr22.fa")
+    return test
 
 def test_calculate_yr(read, SOFT_CLIP_LENGTH_THRESHOLD):
     from pyslavseq.tags.add_tags import calculate_yr
@@ -26,24 +38,29 @@ def test_calculate_ys(read):
     ys = calculate_ys(read)
     assert int(ys) == read.get_tag('YS')
 
-read_id = ""
-for count, read in enumerate(bam):  
-    # skip secondary and supplementary alignments
-    if read.is_secondary or read.is_supplementary: continue
-    print(f"Processing read #{count+1} with id: {read.query_name}")
-    if read.is_read1:
-        r1 = read
-    else:
-        r2 = read
+def test_calculate_tags(test):
 
-    # check if read is a mate of the previous read
-    if read.query_name != read_id:
-        read_id = read.query_name
-        continue
+    CONSENSUS, PREFIX_LENGTH, R1_FLANK_LENGTH, R2_FLANK_LENGTH, SOFT_CLIP_LENGTH_THRESHOLD = test.parameters
 
-    # calculate YR and YS if read has cigarstring
-    if r2.cigarstring:
-        test_calculate_yr(r2, SOFT_CLIP_LENGTH_THRESHOLD)
-        test_calculate_ys(r2)
+    read_id = ""
+    for count, read in enumerate(test.bam):  
+        # skip secondary and supplementary alignments
+        if read.is_secondary or read.is_supplementary: continue
+        print(f"Processing read #{count+1} with id: {read.query_name}")
+        if read.is_read1:
+            r1 = read
+        else:
+            r2 = read
 
+        # check if read is a mate of the previous read
+        if read.query_name != read_id:
+            read_id = read.query_name
+            continue
+
+        # calculate YR and YS if read has cigarstring
+        if r2.cigarstring:
+            test_calculate_yr(read, SOFT_CLIP_LENGTH_THRESHOLD)
+            test_calculate_ys(read)
+
+    test.bam.close()
 
