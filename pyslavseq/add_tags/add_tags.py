@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-# Author: Mike Cuoco
+# Author: Mike Cuoco, adapted from Perl code by Apuã Paquola
 # Created on: 7/14/22, 9:35 AM
-#
-# Description: add SLAV-seq tags to a BAM file
-# Usage: python add_tags.py {input.bam} {output.bam}
+__author__ = "Michael Cuoco"
 
 import pysam
 import pyfaidx
