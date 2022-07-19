@@ -10,12 +10,6 @@ from Bio import Align
 from Bio.Seq import Seq
 from pathlib import Path
 
-CONSENSUS = Seq('ATGTACCCTAAAACTTAGAGTATAATAAA')
-PREFIX_LENGTH = len(CONSENSUS)+2
-R1_FLANK_LENGTH=750
-R2_FLANK_LENGTH=PREFIX_LENGTH
-SOFT_CLIP_LENGTH_THRESHOLD=5
-
 # We add the custom flags below to the bam file:
 # YR: a 0 or 1 valued integer, indicating if the pair is a reference read pair or not. 
 #   1: the beginning of read 2 contains less than SOFT_CLIP_LENGTH_THRESHOLD soft clip letters, and it is in proper pair with read 1. 
@@ -52,7 +46,7 @@ def calculate_ys(read):
 
     return 0
 
-def calculate_yg_from_r1(read, prefix, extra_flank):
+def calculate_yg_from_r1(read, prefix, extra_flank, aligner, ref):
     if read.is_unmapped: return 0
     if read.is_reverse:
         b = max(0, read.reference_end-extra_flank)
@@ -65,7 +59,7 @@ def calculate_yg_from_r1(read, prefix, extra_flank):
 
     return aligner.score(flank.seq, prefix)
 
-def calculate_yg_from_r2(read, prefix, prefix_length, extra_flank):
+def calculate_yg_from_r2(read, prefix, prefix_length, extra_flank, aligner, ref):
 
     if read.is_reverse:
         e = read.reference_end + read.reference_length - 1 + prefix_length + extra_flank
@@ -78,7 +72,7 @@ def calculate_yg_from_r2(read, prefix, prefix_length, extra_flank):
 
     return aligner.score(flank.seq, prefix)
 
-def calculate_ya(consensus, prefix):
+def calculate_ya(consensus, prefix, aligner):
     return aligner.score(consensus, prefix)
 
 def parse_args():
@@ -97,26 +91,19 @@ def parse_args():
 
     return args
 
-def main():
-    
-    # get arguments
-    args = parse_args()
+def set_parameters():
+    # set standard parameters
+    CONSENSUS = Seq('ATGTACCCTAAAACTTAGAGTATAATAAA')
+    PREFIX_LENGTH = len(CONSENSUS)+2
+    R1_FLANK_LENGTH=750
+    R2_FLANK_LENGTH=PREFIX_LENGTH
+    SOFT_CLIP_LENGTH_THRESHOLD=5
+    return [CONSENSUS, PREFIX_LENGTH, R1_FLANK_LENGTH, R2_FLANK_LENGTH, SOFT_CLIP_LENGTH_THRESHOLD]
 
-    # sort alignment by read names and then open with pysam
-    # TODO: maybe remove this sort step and instead pipe samtools output into this script. 
-    sorted_bam = args.bam.with_suffix(".namesorted.sam")
-    pysam.sort("-n", str(args.bam), "-o", str(sorted_bam))
-    reads = pysam.AlignmentFile(sorted_bam, "rb")
-    out = pysam.AlignmentFile(str(args.out), "wb", template=reads)
-
-    # read in the reference
-    global ref
-    ref = pyfaidx.Fasta(str(args.reference))
-
+def setup_aligner():
     # setup pairwise aligner
     # used scores from from https://github.com/apuapaquola/gapafim/blob/main/Gapafim/sw.h
     # note: algorithm is automatically chosen based on the scoring matrix, need to check if scores match perl implementation
-    global aligner
     aligner = Align.PairwiseAligner()
     aligner.alphabet = "ACGTNactgn"
     aligner.match_score = 1
@@ -124,7 +111,26 @@ def main():
     aligner.open_gap_score = -5
     aligner.extend_gap_score = -1
     aligner.mode = "local"
+    return aligner
 
+def main():
+    
+    # get arguments
+    args = parse_args()
+
+    # sort alignment by read names and then open with pysam
+    # TODO: maybe remove this sort step and instead pipe samtools output into this script. 
+    # sorted_bam = args.bam.with_suffix(".namesorted.sam")
+    # pysam.sort("-n", str(args.bam), "-o", str(sorted_bam))
+    reads = pysam.AlignmentFile(args.bam, "rb")
+    out = pysam.AlignmentFile(str(args.out), "wb", template=reads)
+
+    # read in the reference
+    ref = pyfaidx.Fasta(str(args.reference))
+
+    CONSENSUS, PREFIX_LENGTH, R1_FLANK_LENGTH, R2_FLANK_LENGTH, SOFT_CLIP_LENGTH_THRESHOLD = set_parameters()
+    aligner = setup_aligner()
+   
     read_id = ""
     for count, read in enumerate(reads):  
         # skip secondary and supplementary alignments
@@ -153,13 +159,13 @@ def main():
 
         # calculate YG
         if r2.is_unmapped and r2.is_proper_pair:
-            yg = calculate_yg_from_r2(r2, prefix, PREFIX_LENGTH, R2_FLANK_LENGTH)
+            yg = calculate_yg_from_r2(r2, prefix, PREFIX_LENGTH, R2_FLANK_LENGTH, aligner, ref)
         else:
-            yg = calculate_yg_from_r1(r1, prefix, R1_FLANK_LENGTH)
+            yg = calculate_yg_from_r1(r1, prefix, R1_FLANK_LENGTH, aligner, ref)
         print(f"yg = {yg}")
 
         # calculate YA
-        ya = calculate_ya(CONSENSUS, prefix)
+        ya = calculate_ya(CONSENSUS, prefix, aligner)
         print(f"ya = {ya}")
         # save YR, YS, YG, YA to read, write to file
         for r in [r1,r2]:
