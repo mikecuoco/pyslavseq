@@ -22,7 +22,6 @@ yr_inputs, ys_inputs, ya_inputs, y2_inputs, yg_r1_inputs, yg_r2_inputs = [],[],[
 for count, read in enumerate(bam):  
     # skip secondary and supplementary alignments
     if read.is_secondary or read.is_supplementary: continue
-    print(f"Processing read #{count+1} with id: {read.query_name}")
     if read.is_read1:
         r1 = read
     else:
