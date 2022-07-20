@@ -56,8 +56,8 @@ def prio_pair_rmdup(filename, out_filename):
                 all_fields = "\t".join([r1.qname, str(r1.mapping_quality + r2.mapping_quality), str(sumqual), pos])
                 
                 subprocess.run(
-                    "sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | " +
-                    "perl -pe 's/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/' | cut -f 1,2 | sort -S 5000M", 
+                    'sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | ' +
+                    'perl -pe "s/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/" | cut -f 1,2 | sort -S 5000M', 
                     input=all_fields, stdout=outfile, shell=True, check=True, text=True)
 
                 r2 = None
