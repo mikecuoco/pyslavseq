@@ -99,7 +99,7 @@ def set_parameters():
 
 def setup_aligner():
     # setup pairwise aligner
-    # used scores from from https://github.com/apuapaquola/gapafim/blob/main/Gapafim/sw.h
+    # tried to match parameters from https://github.com/apuapaquola/gapafim/blob/main/Gapafim/sw.h
     # note: algorithm is automatically chosen based on the scoring matrix, need to check if scores match perl implementation
     aligner = Align.PairwiseAligner()
     sub_mat = np.array([[1, -1, -1, -1, -1],
@@ -110,7 +110,9 @@ def setup_aligner():
     aligner.substitution_matrix = Align.substitution_matrices.Array("ACTGN", dims = 2, data = sub_mat)
     aligner.open_gap_score = -5
     aligner.extend_gap_score = -1
+    aligner.end_gap_score = -1
     aligner.mode = "local"
+    aligner.epsilon = 1e-10
     return aligner
 
 def main():
