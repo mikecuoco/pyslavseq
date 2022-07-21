@@ -52,6 +52,8 @@ def prio_pair_rmdup(filename, out_filename):
 
                 # join target ID, position, and strand info
                 pos = ":".join([r1.reference_name, str(r1pos), r1strand])
+                test = open("pos.txt", "a+")
+                test.write(r1.reference_name)
                 # join and print more metrics to output file
                 all_fields = "\t".join([r1.qname, str(r1.mapping_quality + r2.mapping_quality), str(sumqual), pos])
                 
@@ -65,7 +67,7 @@ def prio_pair_rmdup(filename, out_filename):
         r1 = r2
 
     outfile.close()
-
+    test.close()
 def parse_args():
 
     parser = argparse.ArgumentParser(description="Remove duplicates from BAM files")
@@ -88,12 +90,10 @@ def main():
     input_bam_fn = args.bam
     output_bam_fn = args.out
 
-    # input_bam_path = os.path.abspath(sys.argv[1])
-
     if os.path.exists(output_bam_fn):
         sys.exit("Output file already exists!")
 
-    locale.setlocale(locale.LC_ALL, "C")
+    # locale.setlocale(locale.LC_ALL, "C")
 
     # pwd = os.getcwd().strip()
     # curdir, tmpdir = use_tmp_dir(pwd)
@@ -108,14 +108,14 @@ def main():
     header = open("header.txt", "w+")
     output_bam = open(output_bam_fn, "w+")
 
-    subprocess.run(["samtools", "view", "-H"], stdin=input_bam, stdout=header, check=True, text=True)
+    subprocess.run(["samtools", "view", "-H"], stdin=input_bam, stdout=header, check=True)
 
     input_bam.seek(0) # reset file pointer to start of file
-    p1 = subprocess.Popen(["samtools", "view"], stdin=input_bam, stdout=subprocess.PIPE, text=True)
+    p1 = subprocess.Popen(["samtools", "view"], stdin=input_bam, stdout=subprocess.PIPE)
     p2 = subprocess.run(
-        "sort -T ./ -S 1500M -s -k 1,1 | " +
-        "join -t '\t' - selected.txt | cat header.txt - | samtools view -S -b -",
-        stdin=p1.stdout, stdout=output_bam, shell=True, check=True, text=True)
+        'sort -T ./ -S 1500M -s -k 1,1 | ' +
+        'join -t "\t" - selected.txt | cat header.txt - | samtools view -S -b -',
+        stdin=p1.stdout, stdout=output_bam, shell=True, check=True)
 
     input_bam.close()
     header.close()
