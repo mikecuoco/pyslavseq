@@ -5,9 +5,9 @@ import pysam
 import subprocess
 import sys
 import os
-import locale
 import argparse
 from pathlib import Path
+from shlex import quote
 
 # def use_tmp_dir(path):
 #     # TODO
@@ -45,29 +45,25 @@ def prio_pair_rmdup(filename, out_filename):
                 for q in query_qualities:
                     sumqual += q
                 
-                r1pos = r1.query_alignment_start + 1 # convert from 0-based to 1-based coordinates
+                r1pos = r1.reference_end + 1 if r1.is_reverse else r1.reference_start + 1 # convert from 0-based to 1-based coordinates
                 
                 # label strand
                 r1strand = "-" if r1.is_reverse else "+"
 
                 # join target ID, position, and strand info
                 pos = ":".join([r1.reference_name, str(r1pos), r1strand])
-                test = open("pos.txt", "a+")
-                test.write(r1.reference_name)
+                
                 # join and print more metrics to output file
                 all_fields = "\t".join([r1.qname, str(r1.mapping_quality + r2.mapping_quality), str(sumqual), pos])
                 
-                subprocess.run(
-                    'sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | ' +
-                    'perl -pe "s/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/" | cut -f 1,2 | sort -S 5000M', 
-                    input=all_fields, stdout=outfile, shell=True, check=True, text=True)
+                outfile.write(all_fields + "\n")
 
                 r2 = None
         
         r1 = r2
 
     outfile.close()
-    test.close()
+    
 def parse_args():
 
     parser = argparse.ArgumentParser(description="Remove duplicates from BAM files")
@@ -93,17 +89,25 @@ def main():
     if os.path.exists(output_bam_fn):
         sys.exit("Output file already exists!")
 
-    # locale.setlocale(locale.LC_ALL, "C")
-
     # pwd = os.getcwd().strip()
     # curdir, tmpdir = use_tmp_dir(pwd)
     # os.symlink(input_bam_path, tmpdir + "/input.bam")
     # os.chdir(tmpdir)
 
+    os.environ['LC_ALL'] = "C"
+
     prio_pair_rmdup(
         input_bam_fn, 
-        "selected.txt")
+        "all_fields.txt")
+    
+    unsorted_ids = open("all_fields.txt", "r")
+    sorted_ids = open("selected.txt", "w+")
 
+    subprocess.run(
+        'sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | ' +
+        'perl -pe "s/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/" | cut -f 1,2 | sort -S 5000M',
+        stdin=unsorted_ids, stdout=sorted_ids, shell=True, check=True, text=True)
+    
     input_bam = open(input_bam_fn, "r")
     header = open("header.txt", "w+")
     output_bam = open(output_bam_fn, "w+")
@@ -121,6 +125,7 @@ def main():
     header.close()
     output_bam.close()
 
+    os.remove("all_fields.txt")
     os.remove("selected.txt")
     os.remove("header.txt")
 
