@@ -6,13 +6,10 @@ import subprocess
 import sys
 import os
 import argparse
+import tempfile
+import shutil
+import glob
 from pathlib import Path
-from shlex import quote
-
-# def use_tmp_dir(path):
-#     # TODO
-#     tmpbase = path
-#     old = path
 
 def prio_pair_rmdup(filename, out_filename):
     bam = pysam.AlignmentFile(filename, "rb") # read input bam file
@@ -89,28 +86,29 @@ def main():
     if os.path.exists(output_bam_fn):
         sys.exit("Output file already exists!")
 
-    # pwd = os.getcwd().strip()
-    # curdir, tmpdir = use_tmp_dir(pwd)
-    # os.symlink(input_bam_path, tmpdir + "/input.bam")
-    # os.chdir(tmpdir)
-
     os.environ['LC_ALL'] = "C"
 
+    curdir = os.getcwd()
+    tmpdir = tempfile.mkdtemp(dir="./")
+    os.symlink(input_bam_fn, tmpdir + "/input.bam")
+    os.chdir(tmpdir)
+
     prio_pair_rmdup(
-        input_bam_fn, 
+        "input.bam", 
         "all_fields.txt")
     
     unsorted_ids = open("all_fields.txt", "r")
     sorted_ids = open("selected.txt", "w+")
 
+    # NOTE: shell=True can lead to security vulnerabilities
     subprocess.run(
         'sort -S 5000M -k 4,4 -k 2,2rn -k 3,3rn | uniq -f 3 -c | ' +
         'perl -pe "s/^ +(\\d+) +(\\S+)/\$2\\tXD:i:\$1/" | cut -f 1,2 | sort -S 5000M',
         stdin=unsorted_ids, stdout=sorted_ids, shell=True, check=True, text=True)
     
-    input_bam = open(input_bam_fn, "r")
+    input_bam = open("input.bam", "r")
     header = open("header.txt", "w+")
-    output_bam = open(output_bam_fn, "w+")
+    output_bam = open("output.bam", "w+")
 
     subprocess.run(["samtools", "view", "-H"], stdin=input_bam, stdout=header, check=True)
 
@@ -125,9 +123,13 @@ def main():
     header.close()
     output_bam.close()
 
-    os.remove("all_fields.txt")
-    os.remove("selected.txt")
-    os.remove("header.txt")
+    os.chdir(curdir)
+    shutil.move(tmpdir + "/output.bam", output_bam_fn)
 
 if __name__ == "__main__":
     main()
+    
+    tmpdirs = glob.glob("tmp*")
+    if len(tmpdirs) != 0:
+        for tmp in tmpdirs:
+            shutil.rmtree(tmp)

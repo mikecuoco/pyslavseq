@@ -41,7 +41,6 @@ class TestRmdup:
             os.chdir("../../")
 
             subprocess.run(["pyslavseq/rmdup/slavseq_rmdup_hts.py", "-b", self.bam_in, "-o", self.bam_out_py], check=True)
-            # os.system("pyslavseq/rmdup/slavseq_rmdup_hts.py -b " + bam_in + " -o " + bam_out_py)
 
         perl_header_path = _myself.__path__[0] + "/perl_header_sq.txt"
         py_header_path = _myself.__path__[0] + "/py_header_sq.txt"
