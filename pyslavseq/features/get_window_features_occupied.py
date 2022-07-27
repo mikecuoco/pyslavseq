@@ -3,12 +3,12 @@ __author__ = "Apuã Paquola"
 import argparse
 import pysam
 
-from ..genome import interval_generator as ig
-from ..genome import Genome, Interval
-from .WindowFeatures import WindowFeatures
-from .TabixSamWithPolyA import TabixSamWithPolyA
-from .occupied_windows import occupied_windows_in_genome
-from .ttaaaa import ENSearch
+from pyslavseq.genome import interval_generator as ig
+from pyslavseq.genome import Genome, Interval
+from pyslavseq.features.WindowFeatures import WindowFeatures
+from pyslavseq.features.TabixSamWithPolyA import TabixSamWithPolyA
+from pyslavseq.features.occupied_windows import occupied_windows_in_genome
+from pyslavseq.features.ttaaaa import ENSearch
 
 
 def main():
