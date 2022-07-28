@@ -8,7 +8,7 @@ from pyslavseq.genome import Genome, Interval
 from pyslavseq.features.WindowFeatures import WindowFeatures
 from pyslavseq.features.TabixSamWithPolyA import TabixSamWithPolyA
 from pyslavseq.features.occupied_windows import occupied_windows_in_genome
-from pyslavseq.features.ttaaaa import ENSearch
+from pyslavseq.features.ttaaaa_bio import ENSearch
 
 
 def main():
