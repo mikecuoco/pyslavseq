@@ -31,6 +31,12 @@ class ENSearch:
         self.right_flank = right_flank
         # self.threshold = MOODS.tools.threshold_from_p(self.matrix, MOODS.tools.flat_bg(4), 0.2)
 
+        with open("pyslavseq/features/ensearch.pfm") as pfm:
+            m = motifs.read(pfm, "pfm")
+
+        pwm = m.counts.normalize(pseudocounts=0.2)
+        self.pssm = pwm.log_odds()
+
     @functools.lru_cache(maxsize=1024, typed=False)
     def pos_and_score(self, chrom, pos, te_strand):
         if pos is np.nan:
@@ -66,18 +72,13 @@ class ENSearch:
 
             # results = MOODS.scan.scan_best_hits_dna(s, [matrix], 1, 10, len(s), len(s))
 
-            with open("pyslavseq/features/ensearch.pfm") as pfm:
-                m = motifs.read(pfm, "pfm")
-
-            pwm = m.counts.normalize(pseudocounts=0.2)
-            pssm = pwm.log_odds()
-            results = list(pssm.search(Seq(s), threshold=3.0))
-
-            # print(results)
+            results = list(self.pssm.search(Seq(s), threshold=3.0))
+            
             if len(results) == 0:
                 en_pos = - self.left_flank
                 en_score = 0
                 motif = ''
+                # print(motif, en_pos, en_score)
             else:
                 # print(">> ", len(results[0]),  file=sys.stderr, flush=True)
                 best_hit = max(results, key=itemgetter(1))
@@ -86,6 +87,6 @@ class ENSearch:
                 en_pos = spos - zeropos
                 en_score = int(best_hit[1])
                 
-                return motif, en_pos, en_score
+            return motif, en_pos, en_score
 
         return moods_results(s, self.matrix, self.left_flank)

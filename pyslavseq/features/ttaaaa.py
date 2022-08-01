@@ -73,6 +73,6 @@ class ENSearch:
                 en_pos = spos - zeropos
                 en_score = int(results[0][0].score)
 
-                return motif, en_pos, en_score
+            return motif, en_pos, en_score
 
         return moods_results(s, self.matrix, self.left_flank)
