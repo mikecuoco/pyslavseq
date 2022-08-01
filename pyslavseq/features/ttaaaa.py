@@ -26,7 +26,7 @@ class ENSearch:
         self.fa = pysam.Fastafile(genome_fasta_file)
         self.left_flank = left_flank
         self.right_flank = right_flank
-        self.threshold = MOODS.tools.threshold_from_p(self.matrix, MOODS.tools.flat_bg(4), 0.2)
+        # self.threshold = MOODS.tools.threshold_from_p(self.matrix, MOODS.tools.flat_bg(4), 0.2)
 
     @functools.lru_cache(maxsize=1024, typed=False)
     def pos_and_score(self, chrom, pos, te_strand):

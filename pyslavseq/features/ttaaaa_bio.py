@@ -34,8 +34,7 @@ class ENSearch:
         with open("pyslavseq/features/ensearch.pfm") as pfm:
             m = motifs.read(pfm, "pfm")
 
-        pwm = m.counts.normalize(pseudocounts=0.2)
-        self.pssm = pwm.log_odds()
+        self.pwm = m.counts.normalize(pseudocounts=0.01)
 
     @functools.lru_cache(maxsize=1024, typed=False)
     def pos_and_score(self, chrom, pos, te_strand):
@@ -72,13 +71,27 @@ class ENSearch:
 
             # results = MOODS.scan.scan_best_hits_dna(s, [matrix], 1, 10, len(s), len(s))
 
-            results = list(self.pssm.search(Seq(s), threshold=3.0))
+            a_size = 4
+            counts = {"A": 0, "C": 0, "G": 0, "T": 0}
+            bg = {"A": 0, "C": 0, "G": 0, "T": 0}
+
+            for char in s:
+                if char != "N":
+                    counts[char] += 1
+
+            count_all = sum(counts.values())
+                    
+            for nuc in "ACGT":
+                bg[nuc] = (counts[nuc] + 0.01)/(count_all + a_size * 0.01)
+
+            pssm = self.pwm.log_odds(bg)
+            results = list(pssm.search(Seq(s), threshold=3.0))
             
             if len(results) == 0:
                 en_pos = - self.left_flank
                 en_score = 0
                 motif = ''
-                # print(motif, en_pos, en_score)
+                
             else:
                 # print(">> ", len(results[0]),  file=sys.stderr, flush=True)
                 best_hit = max(results, key=itemgetter(1))
